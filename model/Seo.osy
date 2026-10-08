@@ -1,0 +1,185 @@
+// The schema.org vocabulary a store and a content site need for rich results, as classes. Every top-level block derives
+// from the core `JsonLd`, so a page's `head { StructuredData = … }` takes any of them, or several in a list:
+//
+//     head { StructuredData = [ new SeoProduct { … }, new SeoBreadcrumbList { … } ]; }
+//
+// ⚑ EACH CLASS IS ITS OWN JSON. Members carry their schema.org spelling with `[ExternalName]`, and a block writes itself
+//   with `JsonSerializer.Serialize(this, WhenWritingNull)` — so a member left null is simply absent, which is what
+//   schema.org means by "not stated". The head escapes the result for the page; nothing here escapes anything itself.
+
+namespace Osysharp.Seo;
+
+// Each member's `[Value]` is the schema.org URL the JSON carries, which is the spelling Google reads — so both enums are
+// `[Type(string)]`, stored by that string rather than by position.
+/// Whether an offer can be bought now — schema.org's `ItemAvailability`.
+[Type(string)]
+public enum SeoAvailability {
+  [Value("https://schema.org/InStock")] InStock,
+  [Value("https://schema.org/OutOfStock")] OutOfStock,
+  [Value("https://schema.org/PreOrder")] PreOrder,
+  [Value("https://schema.org/BackOrder")] BackOrder,
+  [Value("https://schema.org/LimitedAvailability")] LimitedAvailability,
+  [Value("https://schema.org/SoldOut")] SoldOut,
+  [Value("https://schema.org/Discontinued")] Discontinued,
+}
+
+/// The state of the goods — schema.org's `OfferItemCondition`.
+[Type(string)]
+public enum SeoCondition {
+  [Value("https://schema.org/NewCondition")] New,
+  [Value("https://schema.org/UsedCondition")] Used,
+  [Value("https://schema.org/RefurbishedCondition")] Refurbished,
+  [Value("https://schema.org/DamagedCondition")] Damaged,
+}
+
+/// What a product costs, and whether it can be bought — the `offers` of a `SeoProduct`.
+public class SeoOffer {
+  [ExternalName("@type")] public string Type = "Offer";
+  /// The price, in `Currency`. Written as a number, with a dot — the form schema.org asks for.
+  [ExternalName("price")] public decimal Price;
+  /// ISO 4217 — "SEK", "EUR".
+  [ExternalName("priceCurrency")] public string Currency = "";
+  [ExternalName("availability")] public SeoAvailability? Availability;
+  [ExternalName("itemCondition")] public SeoCondition? Condition;
+  /// The address this offer is bought at — usually the product page itself.
+  [ExternalName("url")] public string? Url;
+  /// The last day this price holds, for a sale.
+  [ExternalName("priceValidUntil")] public DateOnly? PriceValidUntil;
+}
+
+/// The average of a product's reviews — its `aggregateRating`.
+public class SeoRating {
+  [ExternalName("@type")] public string Type = "AggregateRating";
+  [ExternalName("ratingValue")] public decimal Value;
+  [ExternalName("reviewCount")] public int Count;
+  /// The top of the scale. Null means 5, as schema.org assumes.
+  [ExternalName("bestRating")] public decimal? Best;
+}
+
+/// Who makes a product — its `brand`.
+public class SeoBrand {
+  [ExternalName("@type")] public string Type = "Brand";
+  [ExternalName("name")] public string Name = "";
+}
+
+/// A product, for a product page — name, pictures, price and stock, and its rating.
+///
+///     head {
+///       StructuredData = new SeoProduct {
+///         Name = product.Name, Description = product.Summary, Image = [product.PhotoUrl],
+///         Offers = new SeoOffer { Price = product.Price, Currency = "SEK", Availability = SeoAvailability.InStock },
+///       };
+///     }
+public class SeoProduct : JsonLd {
+  [ExternalName("@context")] public string Context = "https://schema.org";
+  [ExternalName("@type")] public string Type = "Product";
+  [ExternalName("name")] public string Name = "";
+  [ExternalName("description")] public string? Description;
+  /// Absolute addresses of the product's pictures, the best first.
+  [ExternalName("image")] public List<string>? Image;
+  [ExternalName("sku")] public string? Sku;
+  [ExternalName("gtin")] public string? Gtin;
+  [ExternalName("brand")] public SeoBrand? Brand;
+  [ExternalName("url")] public string? Url;
+  [ExternalName("offers")] public SeoOffer? Offers;
+  [ExternalName("aggregateRating")] public SeoRating? Rating;
+
+  public override string ToJson() {
+    return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+  }
+}
+
+/// One step of a breadcrumb trail: what it is called, and where it is.
+public class SeoBreadcrumb {
+  public string Name = "";
+  /// An absolute address. The last step — the page itself — may leave it null.
+  public string? Url;
+}
+
+/// One `ListItem` of a `BreadcrumbList`, as the JSON spells it. `SeoBreadcrumbList` builds these; an app writes
+/// `SeoBreadcrumb`s.
+public class SeoListItem {
+  [ExternalName("@type")] public string Type = "ListItem";
+  [ExternalName("position")] public int Position;
+  [ExternalName("name")] public string Name = "";
+  [ExternalName("item")] public string? Item;
+}
+
+/// What a `SeoBreadcrumbList` writes — its steps numbered from 1.
+public class SeoBreadcrumbListJson {
+  [ExternalName("@context")] public string Context = "https://schema.org";
+  [ExternalName("@type")] public string Type = "BreadcrumbList";
+  [ExternalName("itemListElement")] public List<SeoListItem> Items = [];
+}
+
+/// Where a page sits in the site — Home › Kettles › Blue Kettle. The steps are numbered for you, in order.
+///
+///     new SeoBreadcrumbList { Steps = [
+///       new SeoBreadcrumb { Name = "Kettles", Url = "https://shop.example.com/c/kettles" },
+///       new SeoBreadcrumb { Name = product.Name },
+///     ] }
+public class SeoBreadcrumbList : JsonLd {
+  public List<SeoBreadcrumb> Steps = [];
+
+  public override string ToJson() {
+    var list = new SeoBreadcrumbListJson();
+    var position = 1;
+    foreach (var step in Steps) {
+      list.Items.Add(new SeoListItem { Position = position, Name = step.Name, Item = step.Url });
+      position = position + 1;
+    }
+    return JsonSerializer.Serialize(list, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+  }
+}
+
+/// The organization behind the site — its name, address, logo and profiles elsewhere. Usually on the home page.
+public class SeoOrganization : JsonLd {
+  [ExternalName("@context")] public string Context = "https://schema.org";
+  [ExternalName("@type")] public string Type = "Organization";
+  [ExternalName("name")] public string Name = "";
+  [ExternalName("url")] public string? Url;
+  /// An absolute address of the logo.
+  [ExternalName("logo")] public string? Logo;
+  /// Its profiles on other sites — the same organization, elsewhere.
+  [ExternalName("sameAs")] public List<string>? SameAs;
+
+  public override string ToJson() {
+    return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+  }
+}
+
+/// An article — a help page, a guide, a post: its headline, its line, its language and when it was published and last
+/// changed. `Type` is "Article" unless you say "TechArticle" (a how-to) or "NewsArticle".
+///
+///     head { StructuredData = new SeoArticle { Headline = page.Title, Description = page.Summary, Language = "en",
+///                                              Modified = page.UpdatedAt, Url = App.BaseUrl + "/help/" + page.Slug }; }
+public class SeoArticle : JsonLd {
+  [ExternalName("@context")] public string Context = "https://schema.org";
+  [ExternalName("@type")] public string Type = "Article";
+  [ExternalName("headline")] public string Headline = "";
+  [ExternalName("description")] public string? Description;
+  /// BCP-47 — "en", "sv".
+  [ExternalName("inLanguage")] public string? Language;
+  [ExternalName("datePublished")] public DateTime? Published;
+  [ExternalName("dateModified")] public DateTime? Modified;
+  /// Absolute addresses of its pictures, the best first.
+  [ExternalName("image")] public List<string>? Image;
+  [ExternalName("url")] public string? Url;
+  [ExternalName("publisher")] public SeoOrganization? Publisher;
+
+  public override string ToJson() {
+    return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+  }
+}
+
+/// The site itself — its name, and the address a search runs at, so a search engine can offer a search box for it.
+public class SeoWebSite : JsonLd {
+  [ExternalName("@context")] public string Context = "https://schema.org";
+  [ExternalName("@type")] public string Type = "WebSite";
+  [ExternalName("name")] public string Name = "";
+  [ExternalName("url")] public string? Url;
+
+  public override string ToJson() {
+    return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+  }
+}

@@ -1,0 +1,51 @@
+// A product page, as a store writes one: its head names the product and carries its structured data.
+
+using Osysharp.Seo;
+
+entity Kettle {
+  [Required, MaxLength(120)] string Name;
+  [Required, MaxLength(120)] string Slug;
+  decimal Price;
+  int Stock;
+  // A catalogue anyone may read — and, in this test project only, fill.
+  security { allow read, create when IsAnonymous || IsAuthenticated; }
+}
+
+/// The product's structured data — what the page's head carries, and what the tests read.
+JsonLd KettleData(Kettle k) {
+  return JsonLd.Of([
+    new SeoProduct {
+      Name = k.Name,
+      Url = "https://kettles.example.com/k/" + k.Slug,
+      Offers = new SeoOffer {
+        Price = k.Price, Currency = "SEK",
+        Availability = k.Stock > 0 ? SeoAvailability.InStock : SeoAvailability.OutOfStock,
+      },
+    },
+    new SeoBreadcrumbList { Steps = [
+      new SeoBreadcrumb { Name = "Kettles", Url = "https://kettles.example.com/k" },
+      new SeoBreadcrumb { Name = k.Name },
+    ] },
+  ]);
+}
+
+[Page("/k/{slug}")]
+[AllowAnonymous]
+[Title("Kettle")]
+component KettlePage(string slug) {
+  var kettle = Kettle.Where(k => k.Slug == slug).FirstOrDefault();
+  head {
+    Title = kettle == null ? "Not found" : kettle.Name;
+    StructuredData = kettle == null ? null : KettleData(kettle);
+  }
+  render { Text(slug); }
+}
+
+[Page("/")]
+[AllowAnonymous]
+[Title("Kettles")]
+component Home() {
+  head { StructuredData = [ new SeoWebSite { Name = "Kettles", Url = "https://kettles.example.com/" },
+                            new SeoOrganization { Name = "Kettle AB", Logo = "https://kettles.example.com/logo.png" } ]; }
+  render { Text("kettles"); }
+}

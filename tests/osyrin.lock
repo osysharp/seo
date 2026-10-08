@@ -1,0 +1,17 @@
+{
+  "platform": {
+    "version": "0.9.0"
+  },
+  "entries": [
+    {
+      "name": "Osysharp.Seo",
+      "kind": "package",
+      "version": "0.2.0",
+      "hash": "sha256:9e0cab5e4cbbe27973f17c0e9cdfc8e86d8455c4169dbca8df0d0ed15e387c4f",
+      "minPlatform": "0.9.0",
+      "shadow": "app-forkable",
+      "source": "workspace:kits/seo",
+      "constraint": "0"
+    }
+  ]
+}

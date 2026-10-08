@@ -1,0 +1,49 @@
+using Osysharp.Seo;
+
+[Test]
+void AProductWritesSchemaOrgJson_WithItsOfferAndNothingLeftNull() {
+  var json = new SeoProduct {
+    Name = "Blue Kettle",
+    Image = ["https://kettles.example.com/blue.png"],
+    Offers = new SeoOffer { Price = 349.50m, Currency = "SEK", Availability = SeoAvailability.InStock },
+  }.ToJson();
+  Assert.Equal("{\"@context\":\"https://schema.org\",\"@type\":\"Product\",\"name\":\"Blue Kettle\","
+    + "\"image\":[\"https://kettles.example.com/blue.png\"],"
+    + "\"offers\":{\"@type\":\"Offer\",\"price\":349.50,\"priceCurrency\":\"SEK\",\"availability\":\"https://schema.org/InStock\"}}",
+    json);
+}
+
+[Test]
+void ABreadcrumbTrail_IsNumberedInOrder() {
+  var json = new SeoBreadcrumbList { Steps = [
+    new SeoBreadcrumb { Name = "Kettles", Url = "https://kettles.example.com/k" },
+    new SeoBreadcrumb { Name = "Blue Kettle" },
+  ] }.ToJson();
+  Assert.Equal("{\"@context\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":["
+    + "{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Kettles\",\"item\":\"https://kettles.example.com/k\"},"
+    + "{\"@type\":\"ListItem\",\"position\":2,\"name\":\"Blue Kettle\"}]}",
+    json);
+}
+
+[Test]
+void SeveralBlocks_AreOneJsonArray_AndARawBlockIsItsOwnText() {
+  var json = JsonLd.Of([
+    new SeoOrganization { Name = "Kettle AB" },
+    JsonLd.Raw("{\"@type\":\"Thing\"}"),
+  ]).ToJson();
+  Assert.Equal("[{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"Kettle AB\"},{\"@type\":\"Thing\"}]", json);
+}
+
+[Test]
+void AnOutOfStockKettle_SaysSo_InThePagesOwnData() {
+  var k = new Kettle { Name = "Red Kettle", Slug = "red", Price = 199m, Stock = 0 };
+  Assert.Contains("\"availability\":\"https://schema.org/OutOfStock\"", KettleData(k).ToJson());
+}
+
+[Test]
+void AnArticle_WritesItsHeadlineLanguageAndDates_AndNothingLeftNull() {
+  var json = new SeoArticle { Type = "TechArticle", Headline = "Descale a kettle", Language = "en",
+                              Modified = new DateTime(2026, 3, 4, 9, 30, 0), Url = "/help/descale" }.ToJson();
+  Assert.Equal("{\"@context\":\"https://schema.org\",\"@type\":\"TechArticle\",\"headline\":\"Descale a kettle\","
+    + "\"inLanguage\":\"en\",\"dateModified\":\"2026-03-04T09:30:00Z\",\"url\":\"/help/descale\"}", json);
+}
