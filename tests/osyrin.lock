@@ -6,12 +6,21 @@
     {
       "name": "Osysharp.Seo",
       "kind": "package",
-      "version": "0.2.0",
-      "hash": "sha256:9e0cab5e4cbbe27973f17c0e9cdfc8e86d8455c4169dbca8df0d0ed15e387c4f",
+      "version": "0.2.1",
+      "hash": "sha256:3af8b4759cdb6f1f8fdcca3b15602514f156311705bacdf84f499ae1b19d0dd1",
       "minPlatform": "0.9.0",
       "shadow": "app-forkable",
       "source": "workspace:kits/seo",
       "constraint": "0"
     }
-  ]
+  ],
+  "bridges": {
+    "searched": [
+      "workspace",
+      "platform"
+    ],
+    "skipped": [
+      "github: offline \u2014 the public catalog was not searched for bridges. Run \u0060osy lock\u0060 with a network to look."
+    ]
+  }
 }

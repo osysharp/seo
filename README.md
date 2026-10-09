@@ -26,7 +26,7 @@ use Osysharp.Seo@0;
 ```osy
 using Osysharp.Seo;
 
-[Page("/k/{slug}")]
+[Route("/k/{slug}")]
 [AllowAnonymous]
 component KettlePage(string slug) {
   var kettle = Kettle.Where(k => k.Slug == slug).FirstOrDefault();

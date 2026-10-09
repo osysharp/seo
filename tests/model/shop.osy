@@ -29,7 +29,7 @@ JsonLd KettleData(Kettle k) {
   ]);
 }
 
-[Page("/k/{slug}")]
+[Route("/k/{slug}")]
 [AllowAnonymous]
 [Title("Kettle")]
 component KettlePage(string slug) {
@@ -41,7 +41,7 @@ component KettlePage(string slug) {
   render { Text(slug); }
 }
 
-[Page("/")]
+[Route("/")]
 [AllowAnonymous]
 [Title("Kettles")]
 component Home() {

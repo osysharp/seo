@@ -2,7 +2,7 @@
 // offer and rating, an article, a breadcrumb trail, the organization behind the site, and the site itself — each writes its own
 // JSON-LD, with `@context` and `@type` filled in, so an app never re-derives schema.org's shapes by hand.
 package Osysharp.Seo {
-  version     "0.2.0";
+  version     "0.2.1";
   minPlatform "0.9.0";
   summary     "schema.org structured data (JSON-LD) for a page's head — products, offers, articles, breadcrumbs, organizations.";
   model "model/*.osy";
