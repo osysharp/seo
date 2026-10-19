@@ -2,18 +2,7 @@
   "platform": {
     "version": "0.9.0"
   },
-  "entries": [
-    {
-      "name": "Osysharp.Seo",
-      "kind": "package",
-      "version": "0.2.1",
-      "hash": "sha256:3af8b4759cdb6f1f8fdcca3b15602514f156311705bacdf84f499ae1b19d0dd1",
-      "minPlatform": "0.9.0",
-      "shadow": "app-forkable",
-      "source": "workspace:kits/seo",
-      "constraint": "0"
-    }
-  ],
+  "entries": [],
   "bridges": {
     "searched": [
       "workspace",
