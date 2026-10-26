@@ -50,3 +50,70 @@ The reference page is `osy docs seo kit`; the head itself is `osy docs head`.
 ## Source
 
 `model/Seo.osy`: every class in one file, each one a few lines of fields with their schema.org names.
+
+## Examples
+
+Taken from this package's own tests, which compile and run on every release.
+
+```osy
+using Osysharp.Seo;
+
+[Test]
+void AProductWritesSchemaOrgJson_WithItsOfferAndNothingLeftNull() {
+  var json = new SeoProduct {
+    Name = "Blue Kettle",
+    Image = ["https://kettles.example.com/blue.png"],
+    Offers = new SeoOffer { Price = 349.50m, Currency = "SEK", Availability = SeoAvailability.InStock },
+  }.ToJson();
+  Assert.Equal("{\"@context\":\"https://schema.org\",\"@type\":\"Product\",\"name\":\"Blue Kettle\","
+    + "\"image\":[\"https://kettles.example.com/blue.png\"],"
+    + "\"offers\":{\"@type\":\"Offer\",\"price\":349.50,\"priceCurrency\":\"SEK\",\"availability\":\"https://schema.org/InStock\"}}",
+    json);
+}
+```
+
+From [`tests/seo.test.osy`](tests/seo.test.osy).
+
+```osy
+using Osysharp.Seo;
+
+[Test]
+void ABreadcrumbTrail_IsNumberedInOrder() {
+  var json = new SeoBreadcrumbList { Steps = [
+    new SeoBreadcrumb { Name = "Kettles", Url = "https://kettles.example.com/k" },
+    new SeoBreadcrumb { Name = "Blue Kettle" },
+  ] }.ToJson();
+  Assert.Equal("{\"@context\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":["
+    + "{\"@type\":\"ListItem\",\"position\":1,\"name\":\"Kettles\",\"item\":\"https://kettles.example.com/k\"},"
+    + "{\"@type\":\"ListItem\",\"position\":2,\"name\":\"Blue Kettle\"}]}",
+    json);
+}
+```
+
+From [`tests/seo.test.osy`](tests/seo.test.osy).
+
+```osy
+using Osysharp.Seo;
+
+[Test]
+void SeveralBlocks_AreOneJsonArray_AndARawBlockIsItsOwnText() {
+  var json = JsonLd.Of([
+    new SeoOrganization { Name = "Kettle AB" },
+    JsonLd.Raw("{\"@type\":\"Thing\"}"),
+  ]).ToJson();
+  Assert.Equal("[{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"Kettle AB\"},{\"@type\":\"Thing\"}]", json);
+}
+```
+
+From [`tests/seo.test.osy`](tests/seo.test.osy).
+
+## Learn more
+
+- [The Osysharp.Seo reference](https://osysharp.com/reference/ui/seo-kit/)
+- [Osysharp.Seo in the package catalogue](https://osysharp.com/packages/#osysharp-seo)
+- [The Osy# reference](https://osysharp.com/reference/) — the language, the runtime and every kit
+- [`llms-full.txt`](https://osysharp.com/llms-full.txt) — the whole reference and specification as one Markdown file, for a coding agent
+
+## Licence
+
+MIT — see [`LICENSE`](LICENSE).
